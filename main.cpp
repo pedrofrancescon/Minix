@@ -31,7 +31,7 @@ int main(int argc, const char * argv[]) {
     
     long text_size = Binary2Dec(string(memblock,size), 8, 4);
     int pc = 32;
-    
+
     while (pc < 32 + text_size)
     {
         Instruction instruction (memblock, pc);

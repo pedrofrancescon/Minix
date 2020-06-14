@@ -46,12 +46,11 @@ class Instruction
 {
 private:
     
-    string instruction_binary;
-    string instruction_str;
+    char *instruction_binary;
     
     char instruction_size;
     
-    char opcode;
+    unsigned char opcode;
     bool d;
     bool w;
     char sw;
@@ -65,7 +64,12 @@ private:
     /*-----------------------------------*/
     
     void SetOpcode(char *binary);
-    int SetMod(char *binary);
+    void SetD(char *binary);
+    void SetW(char *binary);
+    void SetMod(char *binary);
+    void SetReg(char *binary);
+    void SetRm(char *binary);
+    void SetSW(char *binary);
     
 public:
     
