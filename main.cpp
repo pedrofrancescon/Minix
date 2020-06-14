@@ -7,7 +7,9 @@
 //
 
 #include "Binary.hpp"
-#include "Instructions.hpp"
+#include "Instruction.hpp"
+
+#define MASK >> 5 & 0x3
 
 int main(int argc, const char * argv[]) {
     
@@ -20,35 +22,22 @@ int main(int argc, const char * argv[]) {
         cout << "Could not open the file" << endl;
         return 0;
     }
-    
+
     size = file.tellg();
     memblock = new char [size];
     file.seekg (0, ios::beg);
     file.read (memblock, size);
     file.close();
     
-     long text_size = Binary2Dec(string(memblock,size), 8, 4);
-//     cout << text_size << endl;
-
-//     string text = Binary2Text(string(memblock,size), 32, 2);
-//     cout << text << endl;
-
-//     string binary = Binary2Hex(string(memblock,size), true, true);
-//     cout << binary << endl;
+    long text_size = Binary2Dec(string(memblock,size), 8, 4);
+    int pc = 32;
     
-    int pointer = 32;
-    
-    while (pointer < 32 + text_size)
+    while (pc < 32 + text_size)
     {
-        int instruc_byte_size = 0;
-        
-        string byte1 = Binary2Bits(string(memblock,size), pointer);
-        string byte2 = Binary2Bits(string(memblock,size), pointer+1);
-        
-        OpcodeCheck(byte1, byte2, &instruc_byte_size);
-        pointer += instruc_byte_size;
+        Instruction instruction (memblock, pc);
+        pc += instruction.GetInstructionSize();
     }
-
+    
     return 0;
     
 }
