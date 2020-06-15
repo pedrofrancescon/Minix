@@ -31,24 +31,19 @@ inline unsigned char getMod(char* binary) { return binary[1] >> 6 & 0x3; }
 inline unsigned char getReg(char* binary) { return binary[1] >> 3 & 0x7; }
 inline unsigned char getRm(char* binary) { return binary[1] & 0x7; }
 
-enum Reg {
-    ax = 0,     al = 0,
-    cx = 1,     cl = 1,
-    dx = 2,     dl = 2,
-    bx = 3,     bl = 3,
-    sp = 4,     ah = 4,
-    bp = 5,     cd = 5,
-    si = 6,     dh = 6,
-    di = 7,     bh = 7,
-};
+string GetRegStr(char reg, bool w);
 
 class Instruction
 {
 private:
     
-    char *instruction_binary;
+    string str[3];
+    string data[2]; // disp-low, disp-high - data-low, data-high
     
-    char instruction_size;
+    /*-----------------------------------*/
+    
+    char *binary; // binary of one instruction only
+    char size;
     
     unsigned char opcode;
     bool d;
@@ -59,9 +54,9 @@ private:
     char reg;
     char rm;
     
-    char data;
-    
     /*-----------------------------------*/
+    
+    void SetBinary(int pc);
     
     void SetOpcode(char *binary);
     void SetD(char *binary);
@@ -70,6 +65,8 @@ private:
     void SetReg(char *binary);
     void SetRm(char *binary);
     void SetSW(char *binary);
+    
+    inline string StrFromData();
     
 public:
     

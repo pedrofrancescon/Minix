@@ -20,6 +20,6 @@ string Binary2Text(const string& s, int start_pos, long text_size);
 
 int Binary2Dec(const string& s, int start_pos, int bytes_count);
 
-string Binary2Hex(const string& s, bool upper_case, bool add_space);
+string Binary2Hex(char s, bool upper_case = false);
 
 #endif /* Binary_hpp */

@@ -46,16 +46,11 @@ int Binary2Dec(const string& s, int start_pos, int bytes_count)
     return result;
 }
 
-string Binary2Hex(const string& s, bool upper_case, bool add_space)
+string Binary2Hex(char s, bool upper_case)
 {
     stringstream ret;
-
-    for (string::size_type i = 0; i < s.length(); ++i)
-    {
-        int z = s[i]&0xff;
-        ret << hex << setfill('0') << setw(2) << (upper_case ? uppercase : nouppercase) << z;
-        ret << (add_space ? " " : "");
-    }
+    
+    ret << hex << setfill('0') << setw(2) << (upper_case ? uppercase : nouppercase) << int(s&0xff);
 
     return ret.str();
 }

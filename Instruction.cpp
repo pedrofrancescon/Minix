@@ -10,16 +10,22 @@
 
 Instruction::Instruction(char* binary, int pc)
 {
-    instruction_size = 0;
+    size = 0;
+    d = 0;
     
     SetOpcode(&binary[pc]);
+    SetBinary(pc);
     
-    instruction_binary = new char [instruction_size];
-
-    for (int i = 0; i < instruction_size; i++)
-    {
-        instruction_binary[i] = binary[pc+i];
-    }
+    cout << str[0];
+    
+    if (str[1] != "")
+        cout << " " << str[1];
+    if (str[2] != "")
+        cout << ", " << str[2];
+    
+    cout << endl;
+    
+    //cout << str[0] << " " << str[1] << ", " << str[2] << endl;
 }
 
 void Instruction::SetOpcode(char* binary)
@@ -27,33 +33,51 @@ void Instruction::SetOpcode(char* binary)
     // 100010dw mod reg r/m
     if (getOpcode6(binary) == 0x22)
     {
-        instruction_size = 2;
+        size = 2;
         opcode = getOpcode6(binary);
         SetD(binary);
         SetW(binary);
         SetMod(binary);
         SetReg(binary);
         SetRm(binary);
-        cout << "mov" << endl;
+        
+        str[0] += "mov";
         return;
     }
     // 1011 w reg data data if w=1
     if (getOpcode4(binary) == 0xB)
     {
-        cout << "mov" << endl;
+        str[0] += "mov";
         opcode = getOpcode4(binary);
-        if ((binary[0] >> 3 & 0x1) == 0x1)
-            instruction_size = 3;
+        
+        reg = binary[0] & 0x7;
+        w = binary[0] >> 3 & 0x1;
+        
+        str[1] = GetRegStr(reg, w);
+        
+        if (w == 0x1)
+        {
+            data[1] = Binary2Hex(binary[1]);
+            data[0] = Binary2Hex(binary[2]);
+            size = 3;
+        }
         else
-            instruction_size = 2;
+        {
+            data[1] = Binary2Hex(binary[1]);
+            data[0] = "";
+            size = 2;
+        }
+        
+        str[2] = StrFromData();
+        
         return;
     }
     // 000000dw mod reg r/m
     if (getOpcode6(binary) == 0)
     {
-        instruction_size = 2;
+        size = 2;
         
-        cout << "add" << endl;
+        str[0] += "add";
         opcode = getOpcode6(binary);
         SetD(binary);
         SetW(binary);
@@ -68,30 +92,41 @@ void Instruction::SetOpcode(char* binary)
     // SUB: 100000sw mod 101 r/m data data
     if (getOpcode6(binary) == 0x20 )
     {
-        instruction_size = 3;
+        size = 3;
         
         opcode = getOpcode6(binary);
         SetMod(binary);
         SetRm(binary);
         SetSW(binary);
-        SetReg(binary);
+        //SetReg(binary);
         
-        if (reg == 0x0)
-            cout << "add" << endl;
-        else if (reg == 0x7)
-            cout << "cmp" << endl;
-        else if (reg == 0x5)
-            cout << "sub" << endl;
+        if (getReg(binary) == 0x0)
+            str[0] += "add";
+        else if (getReg(binary) == 0x7)
+            str[0] += "cmp";
+        else if (getReg(binary) == 0x5)
+            str[0] += "sub";
         
         if (getSW(binary) == 0x1)
-            instruction_size++;
+        {
+            data[1] = Binary2Hex(binary[2]);
+            data[0] = Binary2Hex(binary[3]);
+            size++;
+        }
+        else
+        {
+            data[1] = Binary2Hex(binary[2]);
+            data[0] = "";
+        }
+        
+        str[2] = StrFromData();
         
         return;
     }
     // 001000dw mod 000 r/m
     if (getOpcode6(binary) == 0x8)
     {
-        cout << "and" << endl;
+        str[0] += "and";
 
         opcode = getOpcode6(binary);
         SetD(binary);
@@ -100,135 +135,148 @@ void Instruction::SetOpcode(char* binary)
         SetReg(binary);
         SetRm(binary);
         
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 11101000 disp-low disp-high
     if (getOpcode8(binary) == 0xe8)
     {
-        cout << "call" << endl;
+        str[0] = "call";
+        str[1] = Binary2Hex(binary[2]) + Binary2Hex(binary[1]);
         opcode = getOpcode8(binary);
-        instruction_size = 3;
+        size = 3;
         return;
     }
     // PUSH: 11111111 mod 110 r/m
     // CALL: 11111111 mod 010 r/m
     if (getOpcode8(binary) == 0xff)
     {
-        instruction_size = 2;
+        size = 2;
         opcode = getOpcode8(binary);
         SetMod(binary);
-        SetReg(binary);
+        //SetReg(binary);
         SetRm(binary);
-        if (reg == 0x6) //push
-            cout << "push" << endl;
-        else if (reg == 0x2) //call
-            cout << "call" << endl;
+        if (getReg(binary) == 0x6) //push
+            str[0] += "push";
+        else if (getReg(binary) == 0x2) //call
+            str[0] += "call";
         return;
     }
     // 01001 reg
     if (getOpcode5(binary) == 0x9)
     {
-        cout << "dec" << endl;
+        str[0] += "dec";
+        reg = binary[0]&0x7;
+        str[1] = GetRegStr(reg, 1);
         opcode = getOpcode5(binary);
-        instruction_size = 1;
+        size = 1;
         return;
     }
     // 11110100
     if (getOpcode8(binary) == 0xf4)
     {
-        cout << "hlt" << endl;
+        str[0] += "hlt";
         opcode = getOpcode5(binary);
-        instruction_size = 1;
+        size = 1;
         return;
     }
     // 1110010w port
     if (getOpcode7(binary) == 0x72)
     {
-        cout << "in" << endl;
+        str[0] += "in";
         opcode = getOpcode7(binary);
         SetW(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 1110110w
     if (getOpcode7(binary) == 0x76)
     {
-        cout << "in" << endl;
+        str[0] += "in";
         opcode = getOpcode7(binary);
         SetW(binary);
-        instruction_size = 1;
+        size = 1;
         return;
     }
     // 11001101 type
     if (getOpcode8(binary) == 0xcd)
     {
-        cout << "int" << endl;
+        str[0] += "int";
+        str[1] = Binary2Hex(binary[1]);
         opcode = getOpcode8(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 01110100 disp
     if (getOpcode8(binary) == 0x74)
     {
-        cout << "je" << endl;
+        str[0] += "je";
+        str[1] = Binary2Hex(binary[1]);
         opcode = getOpcode8(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 01111100 disp
     if (getOpcode8(binary) == 0x7c)
     {
-        cout << "jl" << endl;
+        str[0] += "jl";
+        str[1] = Binary2Hex(binary[1]);
         opcode = getOpcode8(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 11101001 disp-low disp-high
     if (getOpcode8(binary) == 0xe9)
     {
-        cout << "jmp" << endl;
+        str[0] += "jmp";
+        str[1] = Binary2Hex(binary[1]);
+        str[2] = Binary2Hex(binary[2]);
         opcode = getOpcode8(binary);
-        instruction_size = 3;
+        size = 3;
         return;
     }
     // 11101011 disp
     if (getOpcode8(binary) == 0xEB)
     {
-        cout << "jmp" << endl;
+        str[0] += "jmp";
+        str[1] = Binary2Hex(binary[1]);
         opcode = getOpcode8(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 01110011 disp
     if (getOpcode8(binary) == 0x73)
     {
-        cout << "jnb" << endl;
+        str[0] += "jnb";
+        str[1] = Binary2Hex(binary[1]);
         opcode = getOpcode8(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 01110101 disp
     if (getOpcode8(binary) == 0x75)
     {
-        cout << "jne" << endl;
+        str[0] += "jne";
+        str[1] = Binary2Hex(binary[1]);
         opcode = getOpcode8(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 01110101 disp
     if (getOpcode8(binary) == 0x7D)
     {
-        cout << "jnl" << endl;
+        str[0] += "jnl";
+        str[1] = Binary2Hex(binary[1]);
         opcode = getOpcode8(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 10001101 mod reg r/m
     if (getOpcode8(binary) == 0x8D)
     {
-        cout << "lea" << endl;
-        instruction_size = 2;
+        str[0] += "lea";
+        size = 2;
+        d = 1;
         opcode = getOpcode8(binary);
         SetMod(binary);
         SetReg(binary);
@@ -238,45 +286,49 @@ void Instruction::SetOpcode(char* binary)
     // 000010dw mod reg r/m
     if (getOpcode6(binary) == 0x2)
     {
-        cout << "or" << endl;
+        str[0] += "or";
         opcode = getOpcode6(binary);
         SetD(binary);
         SetW(binary);
         SetMod(binary);
         SetReg(binary);
         SetRm(binary);
-        instruction_size = 2;
+        size = 2;
         return;
     }
     // 01011 reg
     if (getOpcode5(binary) == 0xB)
     {
-        cout << "pop" << endl;
+        str[0] = "pop";
+        reg = binary[0]&0x7;
+        str[1] = GetRegStr(reg, 1);
         opcode = getOpcode5(binary);
-        instruction_size = 1;
+        size = 1;
         return;
     }
     // 01010 reg
     if (getOpcode5(binary) == 0xA)
     {
-        cout << "push" << endl;
+        str[0] = "push";
+        reg = binary[0]&0x7;
+        str[1] = GetRegStr(reg, 1);
         opcode = getOpcode5(binary);
-        instruction_size = 1;
+        size = 1;
         return;
     }
     // 11000011
     if (getOpcode8(binary) == 0xC3)
     {
-        cout << "ret" << endl;
+        str[0] = "ret";
         opcode = getOpcode8(binary);
-        instruction_size = 1;
+        size = 1;
         return;
     }
     // 110100vw mod 100 r/m
     if (getOpcode6(binary) == 0x34)
     {
-        cout << "shl" << endl;
-        instruction_size = 2;
+        str[0] += "shl";
+        size = 2;
         opcode = getOpcode6(binary);
         SetW(binary);
         SetMod(binary);
@@ -288,32 +340,40 @@ void Instruction::SetOpcode(char* binary)
     // TEST:  1111011w mod 000 r/m data data if w=1
     if (getOpcode7(binary) == 0x7B)
     {
-        instruction_size = 2;
+        size = 2;
         opcode = getOpcode7(binary);
         SetW(binary);
         SetMod(binary);
-        SetReg(binary);
         SetRm(binary);
-        if (reg == 0x3) // neg
+        if (getReg(binary) == 0x3) // neg
         {
-            cout << "neg" << endl;
+            str[0] += "neg";
             return;
         }
-        else if (reg == 0x0) // test
+        else if (getReg(binary) == 0x0) // test
         {
-            cout << "test" << endl;
-            instruction_size++;
+            str[0] += "test";
+            size++;
+            
+            data[1] = Binary2Hex(binary[2]);
+            data[0] = "";
             
             if (w == 0x1)
-                instruction_size++;
+            {
+                data[0] = Binary2Hex(binary[3]);
+                size++;
+            }
         }
+        
+        str[2] = StrFromData();
+        
         return;
     }
     // 001100dw mod reg r/m
     if (getOpcode6(binary) == 0xC)
     {
-        cout << "xor" << endl;
-        instruction_size = 2;
+        str[0] += "xor";
+        size = 2;
         opcode = getOpcode6(binary);
         SetD(binary);
         SetW(binary);
@@ -325,8 +385,8 @@ void Instruction::SetOpcode(char* binary)
     // 000110dw mod reg r/m
     if (getOpcode6(binary) == 0x6)
     {
-        cout << "sbb" << endl;
-        instruction_size = 2;
+        str[0] += "sbb";
+        size = 2;
         opcode = getOpcode6(binary);
         SetD(binary);
         SetW(binary);
@@ -342,12 +402,28 @@ void Instruction::SetMod(char *binary)
 {
     mod = getMod(binary);
     
-    if (mod == 0x0 && getRm(binary) == 0x6) // mod = 00 and r/m = 110
-        instruction_size += 2;
+    if (mod == 0x3) // mod = 11
+    {
+        str[d ? 2 : 1] = GetRegStr(getRm(binary), getW(binary));
+    }
+    else if (mod == 0x0 && getRm(binary) == 0x6) // mod = 00 and r/m = 110
+    {
+        data[1] = Binary2Hex(binary[2]);
+        data[0] = Binary2Hex(binary[3]);
+        size += 2;
+    }
     else if (mod == 0x1) // mod = 01
-        instruction_size += 1;
+    {
+        data[1] = Binary2Hex(binary[2]);
+        data[0] = "";
+        size += 1;
+    }
     else if (mod == 0x2) // mod = 10
-        instruction_size += 2;
+    {
+        data[1] = Binary2Hex(binary[2]);
+        data[0] = Binary2Hex(binary[3]);
+        size += 2;
+    }
 }
 
 void Instruction::SetD(char *binary)
@@ -363,11 +439,56 @@ void Instruction::SetW(char *binary)
 void Instruction::SetReg(char *binary)
 {
     reg = getReg(binary);
+    
+    int str_pos = d ? 1 : 2;
+    
+    str[str_pos] = GetRegStr(reg, w);
 }
 
 void Instruction::SetRm(char *binary)
 {
     rm = getRm(binary);
+    
+    if (getMod(binary) == 0x3)
+        return;
+    
+    int str_pos = d ? 2 : 1;
+    
+    switch (rm) {
+        case 0x0:
+            str[str_pos] = "[bx+si";
+            break;
+        case 0x1:
+            str[str_pos] = "[bx+di";
+            break;
+        case 0x2:
+            str[str_pos] = "[bp+si";
+            break;
+        case 0x3:
+            str[str_pos] = "[bp+di";
+            break;
+        case 0x4:
+            str[str_pos] = "[si";
+            break;
+        case 0x5:
+            str[str_pos] = "[di";
+            break;
+        case 0x6:
+            str[str_pos] = "[bp";
+            break;
+        case 0x7:
+            str[str_pos] = "[bx";
+            break;
+    }
+    
+    if (StrFromData() != "")
+    {
+        str[str_pos] += "+" + StrFromData() + "]";
+    }
+    else
+    {
+        str[str_pos] += "]";
+    }
 }
 
 void Instruction::SetSW(char *binary)
@@ -377,5 +498,48 @@ void Instruction::SetSW(char *binary)
 
 int Instruction::GetInstructionSize()
 {
-    return instruction_size;
+    return size;
 }
+
+void Instruction::SetBinary(int pc)
+{
+    binary = new char [size];
+
+    for (int i = 0; i < size; i++)
+    {
+        binary[i] = binary[pc+i];
+    }
+}
+
+
+
+string GetRegStr(char reg, bool w)
+{
+    switch (reg)
+    {
+        case 0x0:
+            return w ? "ax" : "al";
+        case 0x1:
+            return w ? "cx" : "cl";
+        case 0x2:
+            return w ? "dx" : "dl";
+        case 0x3:
+            return w ? "bx" : "bl";
+        case 0x4:
+            return w ? "sp" : "ah";
+        case 0x5:
+            return w ? "bp" : "cd";
+        case 0x6:
+            return w ? "si" : "dh";
+        case 0x7:
+            return w ? "di" : "bh";
+    }
+    
+    return "";
+}
+
+string Instruction::StrFromData()
+{
+    return data[0] + data[1];
+}
+
