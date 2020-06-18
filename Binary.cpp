@@ -54,3 +54,8 @@ string Binary2Hex(char s, bool upper_case)
 
     return ret.str();
 }
+
+int Binary2Dec(char s)
+{
+    return int(s&0xff);
+}

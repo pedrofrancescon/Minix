@@ -29,14 +29,10 @@ int main(int argc, const char * argv[]) {
     file.read (memblock, size);
     file.close();
     
-//    Instruction test (memblock, 55);
-//    cout << hex << (signed int)(memblock[56]&0xff) <<  endl;
-    
-    
     long text_size = Binary2Dec(string(memblock,size), 8, 4);
-    int pc = 32;
+    int pc = TEXT_START_POS;
 
-    while (pc < 32 + text_size)
+    while (pc < TEXT_START_POS + text_size)
     {
         Instruction instruction (memblock, pc);
         pc += instruction.GetInstructionSize();

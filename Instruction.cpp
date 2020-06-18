@@ -12,6 +12,7 @@ Instruction::Instruction(char* binary, int pc)
 {
     size = 0;
     d = 0;
+    pos = pc;
     
     SetOpcode(&binary[pc]);
     SetBinary(pc);
@@ -228,20 +229,38 @@ void Instruction::SetOpcode(char* binary)
     // 11101001 disp-low disp-high
     if (getOpcode8(binary) == 0xe9)
     {
-        str[0] += "jmp";
-        str[1] = Binary2Hex(binary[1]);
-        str[2] = Binary2Hex(binary[2]);
-        opcode = getOpcode8(binary);
         size = 3;
+        
+        char16_t current_pos = (pos - TEXT_START_POS) + size;
+        unsigned char disp_low = binary[1];
+        char16_t disp_high = binary[2] << 8;
+        char16_t result = current_pos + disp_low + disp_high;
+
+        str[0] += "jmp";
+        
+        str[1] = Binary2Hex((result&0xff00) >> 8);
+        str[1] += Binary2Hex(result&0x00ff);
+        
+        opcode = getOpcode8(binary);
+        
         return;
     }
     // 11101011 disp
     if (getOpcode8(binary) == 0xEB)
     {
-        str[0] += "jmp";
-        str[1] = Binary2Hex(binary[1]);
-        opcode = getOpcode8(binary);
         size = 2;
+        
+        char16_t current_pos = (pos - TEXT_START_POS) + size;
+        char disp = binary[1];
+        char16_t result = current_pos + disp;
+        
+        str[0] += "jmp short";
+        
+        str[1] = Binary2Hex((result&0xff00) >> 8);
+        str[1] += Binary2Hex(result&0x00ff);
+        
+        opcode = getOpcode8(binary);
+        
         return;
     }
     // 01110011 disp

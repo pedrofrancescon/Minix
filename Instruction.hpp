@@ -9,6 +9,8 @@
 #ifndef Instruction_hpp
 #define Instruction_hpp
 
+#define TEXT_START_POS 32
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -44,6 +46,7 @@ private:
     
     char *binary; // binary of one instruction only
     char size;
+    int pos;
     
     unsigned char opcode;
     bool d;
