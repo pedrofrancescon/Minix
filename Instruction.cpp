@@ -25,8 +25,6 @@ Instruction::Instruction(char* binary, int pc)
         cout << ", " << str[2];
     
     cout << endl;
-    
-    //cout << str[0] << " " << str[1] << ", " << str[2] << endl;
 }
 
 void Instruction::SetOpcode(char* binary)
@@ -142,10 +140,20 @@ void Instruction::SetOpcode(char* binary)
     // 11101000 disp-low disp-high
     if (getOpcode8(binary) == 0xe8)
     {
-        str[0] = "call";
-        str[1] = Binary2Hex(binary[2]) + Binary2Hex(binary[1]);
-        opcode = getOpcode8(binary);
         size = 3;
+        
+        char16_t current_pos = (pos - TEXT_START_POS) + size;
+        unsigned char disp_low = binary[1];
+        char16_t disp_high = binary[2] << 8;
+        char16_t result = current_pos + disp_low + disp_high;
+        
+        str[0] = "call";
+        
+        str[1] = Binary2Hex((result&0xff00) >> 8);
+        str[1] += Binary2Hex(result&0x00ff);
+        
+        opcode = getOpcode8(binary);
+        
         return;
     }
     // PUSH: 11111111 mod 110 r/m
@@ -211,19 +219,37 @@ void Instruction::SetOpcode(char* binary)
     // 01110100 disp
     if (getOpcode8(binary) == 0x74)
     {
-        str[0] += "je";
-        str[1] = Binary2Hex(binary[1]);
-        opcode = getOpcode8(binary);
         size = 2;
+        
+        char16_t current_pos = (pos - TEXT_START_POS) + size;
+        char disp = binary[1];
+        char16_t result = current_pos + disp;
+        
+        str[0] += "je";
+        
+        str[1] = Binary2Hex((result&0xff00) >> 8);
+        str[1] += Binary2Hex(result&0x00ff);
+        
+        opcode = getOpcode8(binary);
+        
         return;
     }
     // 01111100 disp
     if (getOpcode8(binary) == 0x7c)
     {
-        str[0] += "jl";
-        str[1] = Binary2Hex(binary[1]);
-        opcode = getOpcode8(binary);
         size = 2;
+        
+        char16_t current_pos = (pos - TEXT_START_POS) + size;
+        char disp = binary[1];
+        char16_t result = current_pos + disp;
+        
+        str[0] += "jl";
+        
+        str[1] = Binary2Hex((result&0xff00) >> 8);
+        str[1] += Binary2Hex(result&0x00ff);
+        
+        opcode = getOpcode8(binary);
+        
         return;
     }
     // 11101001 disp-low disp-high
@@ -266,28 +292,54 @@ void Instruction::SetOpcode(char* binary)
     // 01110011 disp
     if (getOpcode8(binary) == 0x73)
     {
-        str[0] += "jnb";
-        str[1] = Binary2Hex(binary[1]);
-        opcode = getOpcode8(binary);
         size = 2;
+        
+        char16_t current_pos = (pos - TEXT_START_POS) + size;
+        char disp = binary[1];
+        char16_t result = current_pos + disp;
+        
+        str[0] += "jnb";
+        
+        str[1] = Binary2Hex((result&0xff00) >> 8);
+        str[1] += Binary2Hex(result&0x00ff);
+        
+        opcode = getOpcode8(binary);
         return;
     }
     // 01110101 disp
     if (getOpcode8(binary) == 0x75)
     {
-        str[0] += "jne";
-        str[1] = Binary2Hex(binary[1]);
-        opcode = getOpcode8(binary);
         size = 2;
+        
+        char16_t current_pos = (pos - TEXT_START_POS) + size;
+        char disp = binary[1];
+        char16_t result = current_pos + disp;
+        
+        str[0] += "jne";
+        
+        str[1] = Binary2Hex((result&0xff00) >> 8);
+        str[1] += Binary2Hex(result&0x00ff);
+        
+        opcode = getOpcode8(binary);
+        
         return;
     }
     // 01110101 disp
     if (getOpcode8(binary) == 0x7D)
     {
-        str[0] += "jnl";
-        str[1] = Binary2Hex(binary[1]);
-        opcode = getOpcode8(binary);
         size = 2;
+        
+        char16_t current_pos = (pos - TEXT_START_POS) + size;
+        char disp = binary[1];
+        char16_t result = current_pos + disp;
+        
+        str[0] += "jnl";
+        
+        str[1] = Binary2Hex((result&0xff00) >> 8);
+        str[1] += Binary2Hex(result&0x00ff);
+        
+        opcode = getOpcode8(binary);
+        
         return;
     }
     // 10001101 mod reg r/m

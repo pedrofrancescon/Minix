@@ -46,7 +46,7 @@ private:
     
     char *binary; // binary of one instruction only
     char size;
-    int pos;
+    int pos; //position of instruction in file
     
     unsigned char opcode;
     bool d;
