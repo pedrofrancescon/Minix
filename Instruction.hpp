@@ -69,8 +69,6 @@ private:
     void SetRm(char *binary);
     void SetSW(char *binary);
     
-    inline string StrFromData();
-    
 public:
     
     Instruction(char *binary, int pc);

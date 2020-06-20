@@ -56,20 +56,15 @@ void Instruction::SetOpcode(char* binary)
         
         if (w == 0x1)
         {
-            data[1] = Binary2Hex(binary[1]);
-            data[0] = Binary2Hex(binary[2]);
+            char16_t sum = (unsigned char)binary[1] + ((unsigned char)binary[2] << 8 );
+            str[2] = TwoBytes2Hex(sum);
             size = 3;
-        }
-        else
-        {
-            data[1] = Binary2Hex(binary[1]);
-            data[0] = "";
-            size = 2;
+            return;
         }
         
-        str[2] = StrFromData();
+        str[2] = Byte2Hex(binary[1]);
+        size = 2;
         
-        return;
     }
     // 000000dw mod reg r/m
     if (getOpcode6(binary) == 0)
@@ -97,7 +92,6 @@ void Instruction::SetOpcode(char* binary)
         SetMod(binary);
         SetRm(binary);
         SetSW(binary);
-        //SetReg(binary);
         
         if (getReg(binary) == 0x0)
             str[0] += "add";
@@ -108,19 +102,14 @@ void Instruction::SetOpcode(char* binary)
         
         if (getSW(binary) == 0x1)
         {
-            data[1] = Binary2Hex(binary[2]);
-            data[0] = Binary2Hex(binary[3]);
+            char16_t sum = (unsigned char)binary[2] + ((unsigned char)binary[3] << 8 );
+            str[2] = TwoBytes2Hex(sum);
             size++;
-        }
-        else
-        {
-            data[1] = Binary2Hex(binary[2]);
-            data[0] = "";
+            return;
         }
         
-        str[2] = StrFromData();
+        str[2] = Byte2Hex(binary[ (sw == 0x3) ? 3 : 2]);
         
-        return;
     }
     // 001000dw mod 000 r/m
     if (getOpcode6(binary) == 0x8)
@@ -149,8 +138,7 @@ void Instruction::SetOpcode(char* binary)
         
         str[0] = "call";
         
-        str[1] = Binary2Hex((result&0xff00) >> 8);
-        str[1] += Binary2Hex(result&0x00ff);
+        str[1] = TwoBytes2Hex(result);
         
         opcode = getOpcode8(binary);
         
@@ -211,7 +199,7 @@ void Instruction::SetOpcode(char* binary)
     if (getOpcode8(binary) == 0xcd)
     {
         str[0] += "int";
-        str[1] = Binary2Hex(binary[1]);
+        str[1] = Byte2Hex(binary[1]);
         opcode = getOpcode8(binary);
         size = 2;
         return;
@@ -227,8 +215,7 @@ void Instruction::SetOpcode(char* binary)
         
         str[0] += "je";
         
-        str[1] = Binary2Hex((result&0xff00) >> 8);
-        str[1] += Binary2Hex(result&0x00ff);
+        str[1] = TwoBytes2Hex(result);
         
         opcode = getOpcode8(binary);
         
@@ -245,8 +232,7 @@ void Instruction::SetOpcode(char* binary)
         
         str[0] += "jl";
         
-        str[1] = Binary2Hex((result&0xff00) >> 8);
-        str[1] += Binary2Hex(result&0x00ff);
+        str[1] = TwoBytes2Hex(result);
         
         opcode = getOpcode8(binary);
         
@@ -264,8 +250,7 @@ void Instruction::SetOpcode(char* binary)
 
         str[0] += "jmp";
         
-        str[1] = Binary2Hex((result&0xff00) >> 8);
-        str[1] += Binary2Hex(result&0x00ff);
+        str[1] = TwoBytes2Hex(result);
         
         opcode = getOpcode8(binary);
         
@@ -282,8 +267,7 @@ void Instruction::SetOpcode(char* binary)
         
         str[0] += "jmp short";
         
-        str[1] = Binary2Hex((result&0xff00) >> 8);
-        str[1] += Binary2Hex(result&0x00ff);
+        str[1] = TwoBytes2Hex(result);
         
         opcode = getOpcode8(binary);
         
@@ -300,8 +284,7 @@ void Instruction::SetOpcode(char* binary)
         
         str[0] += "jnb";
         
-        str[1] = Binary2Hex((result&0xff00) >> 8);
-        str[1] += Binary2Hex(result&0x00ff);
+        str[1] = TwoBytes2Hex(result);
         
         opcode = getOpcode8(binary);
         return;
@@ -317,8 +300,7 @@ void Instruction::SetOpcode(char* binary)
         
         str[0] += "jne";
         
-        str[1] = Binary2Hex((result&0xff00) >> 8);
-        str[1] += Binary2Hex(result&0x00ff);
+        str[1] = TwoBytes2Hex(result);
         
         opcode = getOpcode8(binary);
         
@@ -335,8 +317,7 @@ void Instruction::SetOpcode(char* binary)
         
         str[0] += "jnl";
         
-        str[1] = Binary2Hex((result&0xff00) >> 8);
-        str[1] += Binary2Hex(result&0x00ff);
+        str[1] = TwoBytes2Hex(result);
         
         opcode = getOpcode8(binary);
         
@@ -403,7 +384,13 @@ void Instruction::SetOpcode(char* binary)
         opcode = getOpcode6(binary);
         SetW(binary);
         SetMod(binary);
-        SetReg(binary);
+        
+        if (getD(binary) == 0x0)
+            str[2] = "1";
+        else
+            str[2] = "cl";
+        
+        //SetReg(binary);
         SetRm(binary);
         return;
     }
@@ -426,17 +413,17 @@ void Instruction::SetOpcode(char* binary)
             str[0] += "test";
             size++;
             
-            data[1] = Binary2Hex(binary[2]);
+            data[1] = Byte2Hex(binary[2]);
             data[0] = "";
             
             if (w == 0x1)
             {
-                data[0] = Binary2Hex(binary[3]);
+                data[0] = Byte2Hex(binary[3]);
                 size++;
             }
         }
         
-        str[2] = StrFromData();
+        str[2] = data[0] + data[1];
         
         return;
     }
@@ -479,20 +466,20 @@ void Instruction::SetMod(char *binary)
     }
     else if (mod == 0x0 && getRm(binary) == 0x6) // mod = 00 and r/m = 110
     {
-        data[1] = Binary2Hex(binary[2]);
-        data[0] = Binary2Hex(binary[3]);
+        data[1] = Byte2Hex(binary[2]);
+        data[0] = Byte2Hex(binary[3]);
         size += 2;
     }
     else if (mod == 0x1) // mod = 01
     {
-        data[1] = Binary2Hex(binary[2]);
+        data[1] = Byte2Hex(binary[2]);
         data[0] = "";
         size += 1;
     }
     else if (mod == 0x2) // mod = 10
     {
-        data[1] = Binary2Hex(binary[2]);
-        data[0] = Binary2Hex(binary[3]);
+        data[1] = Byte2Hex(binary[2]);
+        data[0] = Byte2Hex(binary[3]);
         size += 2;
     }
 }
@@ -545,20 +532,25 @@ void Instruction::SetRm(char *binary)
             str[str_pos] = "[di";
             break;
         case 0x6:
-            str[str_pos] = "[bp";
+            if (getMod(binary) == 0x0)
+                str[str_pos] = "[";
+            else
+                str[str_pos] = "[bp";
             break;
         case 0x7:
             str[str_pos] = "[bx";
             break;
     }
     
-    if (StrFromData() != "")
+    string dt = data[0] + data[1];
+    
+    if (dt != "" && getMod(binary) != 0x0)
     {
-        str[str_pos] += "+" + StrFromData() + "]";
+        str[str_pos] += ((dt.substr(0,1) == "-") ? "" : "+") + dt + "]";
     }
     else
     {
-        str[str_pos] += "]";
+        str[str_pos] += dt + "]";
     }
 }
 
@@ -607,10 +599,5 @@ string GetRegStr(char reg, bool w)
     }
     
     return "";
-}
-
-string Instruction::StrFromData()
-{
-    return data[0] + data[1];
 }
 

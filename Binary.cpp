@@ -46,13 +46,23 @@ int Binary2Dec(const string& s, int start_pos, int bytes_count)
     return result;
 }
 
-string Binary2Hex(char s, bool upper_case)
+string Byte2Hex(char s, bool upper_case)
 {
-    stringstream ret;
+    stringstream result;
     
-    ret << hex << setfill('0') << setw(2) << (upper_case ? uppercase : nouppercase) << int(s&0xff);
+    result << hex << (s<0?"-":"") << setfill('0') << setw(2) << (upper_case ? uppercase : nouppercase) <<  (s<0?-(unsigned)s:s);
 
-    return ret.str();
+    return result.str();
+}
+
+string TwoBytes2Hex(char16_t s, bool upper_case)
+{
+    stringstream result;
+    
+    result << hex << (s<0?"-":"") << setfill('0') << setw(4) << (upper_case ? uppercase : nouppercase) <<  (s<0?-(unsigned)s:s);
+    
+    return result.str();
+    
 }
 
 int Binary2Dec(char s)
