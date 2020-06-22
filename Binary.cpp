@@ -39,7 +39,7 @@ int Binary2Dec(const string& s, int start_pos, int bytes_count)
     
     for (int i = start_pos+1; i < start_pos + bytes_count; i++)
     {
-        result += (s[i]&0xff << shifter);
+        result += (int(s[i]&0xff) << shifter);
         shifter += 8;
     }
 
