@@ -29,7 +29,7 @@ int main(int argc, const char * argv[]) {
     file.read (memblock, size);
     file.close();
     
-//    Instruction test (memblock, 0x88 + TEXT_START_POS);
+//    Instruction test (memblock, 0x8b + TEXT_START_POS);
     
     long text_size = Binary2Dec(string(memblock,size), 8, 4);
     int pc = TEXT_START_POS;

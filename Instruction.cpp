@@ -108,7 +108,7 @@ void Instruction::SetOpcode(char* binary)
             return;
         }
         
-        str[2] = Byte2Hex(binary[ (sw == 0x3) ? 3 : 2]);
+        str[2] = Byte2Hex(binary[2]);
         
     }
     // 001000dw mod 000 r/m
@@ -183,6 +183,10 @@ void Instruction::SetOpcode(char* binary)
         str[0] += "in";
         opcode = getOpcode7(binary);
         SetW(binary);
+        
+        str[1] = GetRegStr(0x0, w);
+        str[2] = Byte2Hex(binary[1], false, false);
+        
         size = 2;
         return;
     }
@@ -192,6 +196,10 @@ void Instruction::SetOpcode(char* binary)
         str[0] += "in";
         opcode = getOpcode7(binary);
         SetW(binary);
+        
+        str[1] = GetRegStr(0x0, w);
+        str[2] = "dx";
+        
         size = 1;
         return;
     }
@@ -453,6 +461,13 @@ void Instruction::SetOpcode(char* binary)
         SetRm(binary);
         return;
     }
+    if (getOpcode8(binary) == 0x98)
+    {
+        str[0] += "cbw";
+        size = 1;
+        opcode = getOpcode8(binary);
+        return;
+    }
 }
 
 
@@ -591,7 +606,7 @@ string GetRegStr(char reg, bool w)
         case 0x4:
             return w ? "sp" : "ah";
         case 0x5:
-            return w ? "bp" : "cd";
+            return w ? "bp" : "ch";
         case 0x6:
             return w ? "si" : "dh";
         case 0x7:
