@@ -91,6 +91,118 @@ void Instruction::SetOpcode(char* binary)
         
     }
     
+    // PUSH: 11111111 mod 110 r/m
+    // CALL: 11111111 mod 010 r/m
+    // JMP:  11111111 mod 101 r/m
+    // JMP:  11111111 mod 100 r/m
+    // DEC:  11111111 mod 001 r/m
+    if (getOpcode8(binary) == 0xff && getReg(binary) != 0x0)
+    {
+        size = 2;
+        opcode = getOpcode8(binary);
+        SetMod(binary);
+        SetRm(binary);
+        if (getReg(binary) == 0x1) // dec
+            str[0] = "dec";
+        else if (getReg(binary) == 0x5 || getReg(binary) == 0x4) // jmp
+            str[0] = "jmp";
+        else if (getReg(binary) == 0x6) // push
+            str[0] = "push";
+        else if (getReg(binary) == 0x2) // call
+            str[0] = "call";
+        return;
+    }
+    
+    // 01010 reg
+    if (getOpcode5(binary) == 0xA)
+    {
+        str[0] = "push";
+        reg = binary[0]&0x7;
+        str[1] = GetRegStr(reg, 1);
+        opcode = getOpcode5(binary);
+        size = 1;
+        return;
+    }
+    
+    // 01011 reg
+    if (getOpcode5(binary) == 0xB)
+    {
+        str[0] = "pop";
+        reg = binary[0]&0x7;
+        str[1] = GetRegStr(reg, 1);
+        opcode = getOpcode5(binary);
+        size = 1;
+        return;
+    }
+    
+    // 10010 reg
+    if (getOpcode5(binary) == 0x12)
+    {
+        str[0] = "xchg";
+        reg = binary[0]&0x7;
+        str[1] = GetRegStr(reg, 1);
+        str[2] = "ax";
+        opcode = getOpcode5(binary);
+        size = 1;
+        return;
+    }
+    
+    // 1110010w port
+    if (getOpcode7(binary) == 0x72)
+    {
+        str[0] = "in";
+        opcode = getOpcode7(binary);
+        SetW(binary);
+        
+        str[1] = GetRegStr(0x0, w);
+        str[2] = Byte2Hex(binary[1], false, false);
+        
+        size = 2;
+        return;
+    }
+    // 1110110w
+    if (getOpcode7(binary) == 0x76)
+    {
+        str[0] = "in";
+        opcode = getOpcode7(binary);
+        SetW(binary);
+        
+        str[1] = GetRegStr(0x0, w);
+        str[2] = "dx";
+        
+        size = 1;
+        return;
+    }
+    
+    // 10001101 mod reg r/m
+    if (getOpcode8(binary) == 0x8D)
+    {
+        str[0] = "lea";
+        size = 2;
+        d = 1;
+        opcode = getOpcode8(binary);
+        SetMod(binary);
+        SetReg(binary);
+        SetRm(binary);
+        return;
+    }
+    
+    // 000000dw mod reg r/m
+    if (getOpcode6(binary) == 0)
+    {
+        size = 2;
+        
+        str[0] = "add";
+        opcode = getOpcode6(binary);
+        SetD(binary);
+        SetW(binary);
+        SetMod(binary);
+        SetReg(binary);
+        SetRm(binary);
+        
+        return;
+    }
+    
     // 1000000w mod 100 r/m data data if w = 1
     if (getOpcode7(binary) == 0x40)
     {
@@ -116,21 +228,6 @@ void Instruction::SetOpcode(char* binary)
         
     }
     
-    // 000000dw mod reg r/m
-    if (getOpcode6(binary) == 0)
-    {
-        size = 2;
-        
-        str[0] = "add";
-        opcode = getOpcode6(binary);
-        SetD(binary);
-        SetW(binary);
-        SetMod(binary);
-        SetReg(binary);
-        SetRm(binary);
-        
-        return;
-    }
     // ADD: 100000sw mod 000 r/m data data if sw = 01
     // CMP: 100000sw mod 111 r/m data data if sw = 01
     // SBB: 100000sw mod 011 r/m data data if sw = 01
@@ -165,6 +262,178 @@ void Instruction::SetOpcode(char* binary)
         return;
         
     }
+    
+    // 000100dw mod reg r/m
+    if (getOpcode6(binary) == 0x4)
+    {
+        size = 2;
+        opcode = getOpcode6(binary);
+        SetD(binary);
+        SetW(binary);
+        SetMod(binary);
+        SetReg(binary);
+        SetRm(binary);
+        
+        str[0] = "adc";
+        return;
+    }
+    
+    // 01000 reg
+    if (getOpcode5(binary) == 0x8)
+    {
+        str[0] = "inc";
+        reg = binary[0]&0x7;
+        str[1] = GetRegStr(reg, 1);
+        opcode = getOpcode5(binary);
+        size = 1;
+        return;
+    }
+    
+    // 1111111w mod 000 r/m
+    if (getOpcode7(binary) == 0x7f)
+    {
+        size = 2;
+        opcode = getOpcode7(binary);
+        SetW(binary);
+        SetMod(binary);
+        SetRm(binary);
+        if (getReg(binary) == 0x0) // inc
+        {
+            str[0] += "inc";
+            return;
+        }
+        
+        return;
+    }
+    
+    // 001010dw mod reg r/m
+    if (getOpcode6(binary) == 0xa)
+    {
+        size = 2;
+        opcode = getOpcode6(binary);
+        SetD(binary);
+        SetW(binary);
+        SetMod(binary);
+        SetReg(binary);
+        SetRm(binary);
+        
+        str[0] = "sub";
+        return;
+    }
+    
+    // 000110dw mod reg r/m
+    if (getOpcode6(binary) == 0x6)
+    {
+        str[0] = "sbb";
+        size = 2;
+        opcode = getOpcode6(binary);
+        SetD(binary);
+        SetW(binary);
+        SetMod(binary);
+        SetReg(binary);
+        SetRm(binary);
+        return;
+    }
+    
+    // 01001 reg
+    if (getOpcode5(binary) == 0x9)
+    {
+        str[0] = "dec";
+        reg = binary[0]&0x7;
+        str[1] = GetRegStr(reg, 1);
+        opcode = getOpcode5(binary);
+        size = 1;
+        return;
+    }
+    
+    // NEG:  1111011w mod 011 r/m
+    // DIV:  1111011w mod 110 r/m
+    // MUL:  1111011w mod 100 r/m
+    // TEST: 1111011w mod 000 r/m data data if w=1
+    if (getOpcode7(binary) == 0x7B)
+    {
+        size = 2;
+        opcode = getOpcode7(binary);
+        SetW(binary);
+        SetMod(binary);
+        SetRm(binary);
+        if (getReg(binary) == 0x3) // neg
+        {
+            str[0] += "neg";
+            return;
+        }
+        else if (getReg(binary) == 0x4) // mul
+        {
+            str[0] += "mul";
+            return;
+        }
+        else if (getReg(binary) == 0x6) // div
+        {
+            str[0] += "div";
+            return;
+        }
+        else if (getReg(binary) == 0x0) // test
+        {
+            str[0] += "test";
+            size++;
+            
+            data[1] = Byte2Hex(binary[2]);
+            data[0] = "";
+            
+            if (w == 0x1)
+            {
+                data[0] = Byte2Hex(binary[3]);
+                size++;
+            }
+        }
+        
+        str[2] = data[0] + data[1];
+        
+        return;
+    }
+    
+    // 0011110w data data if w = 1
+    if (getOpcode7(binary) == 0x1e)
+    {
+        str[0] = "cmp";
+        opcode = getOpcode7(binary);
+        SetW(binary);
+        
+        size = 2;
+        
+        str[1] = GetRegStr(0x0, w);
+        
+        if (w == 1)
+        {
+            char16_t result = char16_t(binary[1]) + (char16_t(binary[2]) << 8);
+            str[2] = TwoBytes2Hex(result);
+            size++;
+            return;
+        }
+        
+        str[2] = Byte2Hex(binary[1]);
+        return;
+    }
+    
+    // 10011000
+    if (getOpcode8(binary) == 0x98)
+    {
+        str[0] = "cbw";
+        size = 1;
+        opcode = getOpcode8(binary);
+        return;
+    }
+    
+    // 10011001
+    if (getOpcode8(binary) == 0x99)
+    {
+        str[0] = "cwd";
+        size = 1;
+        opcode = getOpcode8(binary);
+        return;
+    }
+    
+    
     // 001110dw mod reg r/m
     if (getOpcode6(binary) == 0xe)
     {
@@ -203,28 +472,7 @@ void Instruction::SetOpcode(char* binary)
         return;
     }
     
-    // 0011110w data data if w = 1
-    if (getOpcode7(binary) == 0x1e)
-    {
-        str[0] = "cmp";
-        opcode = getOpcode7(binary);
-        SetW(binary);
-        
-        size = 2;
-        
-        str[1] = GetRegStr(0x0, w);
-        
-        if (w == 1)
-        {
-            char16_t result = char16_t(binary[1]) + (char16_t(binary[2]) << 8);
-            str[2] = TwoBytes2Hex(result);
-            size++;
-            return;
-        }
-        
-        str[2] = Byte2Hex(binary[1]);
-        return;
-    }
+    
     
     // 0010110w data data if w = 1
     if (getOpcode7(binary) == 0x16)
@@ -248,37 +496,9 @@ void Instruction::SetOpcode(char* binary)
         str[2] = Byte2Hex(binary[1]);
         return;
     }
-    // 001010dw mod reg r/m
-    if (getOpcode6(binary) == 0xa)
-    {
-        size = 2;
-        opcode = getOpcode6(binary);
-        SetD(binary);
-        SetW(binary);
-        SetMod(binary);
-        SetReg(binary);
-        SetRm(binary);
-        
-        str[0] = "sub";
-        return;
-    }
     
-    // 1111111w mod 000 r/m
-    if (getOpcode7(binary) == 0x7f)
-    {
-        size = 2;
-        opcode = getOpcode7(binary);
-        SetW(binary);
-        SetMod(binary);
-        SetRm(binary);
-        if (getReg(binary) == 0x0) // inc
-        {
-            str[0] += "inc";
-            return;
-        }
-        
-        return;
-    }
+    
+    
     
     // 001000dw mod 000 r/m
     if (getOpcode6(binary) == 0x8)
@@ -313,43 +533,7 @@ void Instruction::SetOpcode(char* binary)
         
         return;
     }
-    // PUSH: 11111111 mod 110 r/m
-    // CALL: 11111111 mod 010 r/m
-    // JMP:  11111111 mod 101 r/m
-    if (getOpcode8(binary) == 0xff)
-    {
-        size = 2;
-        opcode = getOpcode8(binary);
-        SetMod(binary);
-        SetRm(binary);
-        if (getReg(binary) == 0x5) // jmp
-            str[0] = "jmp";
-        else if (getReg(binary) == 0x6) // push
-            str[0] = "push";
-        else if (getReg(binary) == 0x2) // call
-            str[0] = "call";
-        return;
-    }
-    // 01000 reg
-    if (getOpcode5(binary) == 0x8)
-    {
-        str[0] = "inc";
-        reg = binary[0]&0x7;
-        str[1] = GetRegStr(reg, 1);
-        opcode = getOpcode5(binary);
-        size = 1;
-        return;
-    }
-    // 01001 reg
-    if (getOpcode5(binary) == 0x9)
-    {
-        str[0] = "dec";
-        reg = binary[0]&0x7;
-        str[1] = GetRegStr(reg, 1);
-        opcode = getOpcode5(binary);
-        size = 1;
-        return;
-    }
+    
     // 11110100
     if (getOpcode8(binary) == 0xf4)
     {
@@ -358,32 +542,7 @@ void Instruction::SetOpcode(char* binary)
         size = 1;
         return;
     }
-    // 1110010w port
-    if (getOpcode7(binary) == 0x72)
-    {
-        str[0] = "in";
-        opcode = getOpcode7(binary);
-        SetW(binary);
-        
-        str[1] = GetRegStr(0x0, w);
-        str[2] = Byte2Hex(binary[1], false, false);
-        
-        size = 2;
-        return;
-    }
-    // 1110110w
-    if (getOpcode7(binary) == 0x76)
-    {
-        str[0] = "in";
-        opcode = getOpcode7(binary);
-        SetW(binary);
-        
-        str[1] = GetRegStr(0x0, w);
-        str[2] = "dx";
-        
-        size = 1;
-        return;
-    }
+    
     // 11001101 type
     if (getOpcode8(binary) == 0xcd)
     {
@@ -511,18 +670,7 @@ void Instruction::SetOpcode(char* binary)
         
         return;
     }
-    // 10001101 mod reg r/m
-    if (getOpcode8(binary) == 0x8D)
-    {
-        str[0] = "lea";
-        size = 2;
-        d = 1;
-        opcode = getOpcode8(binary);
-        SetMod(binary);
-        SetReg(binary);
-        SetRm(binary);
-        return;
-    }
+    
     // 000010dw mod reg r/m
     if (getOpcode6(binary) == 0x2)
     {
@@ -537,26 +685,6 @@ void Instruction::SetOpcode(char* binary)
         SetReg(binary);
         SetRm(binary);
         
-        return;
-    }
-    // 01011 reg
-    if (getOpcode5(binary) == 0xB)
-    {
-        str[0] = "pop";
-        reg = binary[0]&0x7;
-        str[1] = GetRegStr(reg, 1);
-        opcode = getOpcode5(binary);
-        size = 1;
-        return;
-    }
-    // 01010 reg
-    if (getOpcode5(binary) == 0xA)
-    {
-        str[0] = "push";
-        reg = binary[0]&0x7;
-        str[1] = GetRegStr(reg, 1);
-        opcode = getOpcode5(binary);
-        size = 1;
         return;
     }
     // 11000011
@@ -593,51 +721,7 @@ void Instruction::SetOpcode(char* binary)
         SetRm(binary);
         return;
     }
-    // NEG:  1111011w mod 011 r/m
-    // DIV:  1111011w mod 110 r/m
-    // MUL:  1111011w mod 100 r/m
-    // TEST: 1111011w mod 000 r/m data data if w=1
-    if (getOpcode7(binary) == 0x7B)
-    {
-        size = 2;
-        opcode = getOpcode7(binary);
-        SetW(binary);
-        SetMod(binary);
-        SetRm(binary);
-        if (getReg(binary) == 0x3) // neg
-        {
-            str[0] += "neg";
-            return;
-        }
-        else if (getReg(binary) == 0x4) // mul
-        {
-            str[0] += "mul";
-            return;
-        }
-        else if (getReg(binary) == 0x6) // div
-        {
-            str[0] += "div";
-            return;
-        }
-        else if (getReg(binary) == 0x0) // test
-        {
-            str[0] += "test";
-            size++;
-            
-            data[1] = Byte2Hex(binary[2]);
-            data[0] = "";
-            
-            if (w == 0x1)
-            {
-                data[0] = Byte2Hex(binary[3]);
-                size++;
-            }
-        }
-        
-        str[2] = data[0] + data[1];
-        
-        return;
-    }
+    
     // 001100dw mod reg r/m
     if (getOpcode6(binary) == 0xC)
     {
@@ -649,35 +733,6 @@ void Instruction::SetOpcode(char* binary)
         SetMod(binary);
         SetReg(binary);
         SetRm(binary);
-        return;
-    }
-    // 000110dw mod reg r/m
-    if (getOpcode6(binary) == 0x6)
-    {
-        str[0] = "sbb";
-        size = 2;
-        opcode = getOpcode6(binary);
-        SetD(binary);
-        SetW(binary);
-        SetMod(binary);
-        SetReg(binary);
-        SetRm(binary);
-        return;
-    }
-    // 10011000
-    if (getOpcode8(binary) == 0x98)
-    {
-        str[0] = "cbw";
-        size = 1;
-        opcode = getOpcode8(binary);
-        return;
-    }
-    // 10011001
-    if (getOpcode8(binary) == 0x99)
-    {
-        str[0] = "cwd";
-        size = 1;
-        opcode = getOpcode8(binary);
         return;
     }
     // 01111111 disp
@@ -793,20 +848,7 @@ void Instruction::SetOpcode(char* binary)
             return;
         }
     }
-    // 000100dw mod reg r/m
-    if (getOpcode6(binary) == 0x4)
-    {
-        size = 2;
-        opcode = getOpcode6(binary);
-        SetD(binary);
-        SetW(binary);
-        SetMod(binary);
-        SetReg(binary);
-        SetRm(binary);
-        
-        str[0] = "adc";
-        return;
-    }
+    
     // 11111101
     if (getOpcode8(binary) == 0xfd)
     {
@@ -829,17 +871,7 @@ void Instruction::SetOpcode(char* binary)
         str[0] = "test";
         return;
     }
-    // 10010 reg
-    if (getOpcode5(binary) == 0x12)
-    {
-        str[0] = "xchg";
-        reg = binary[0]&0x7;
-        str[1] = GetRegStr(reg, 1);
-        str[2] = "ax";
-        opcode = getOpcode5(binary);
-        size = 1;
-        return;
-    }
+    
     // 11000010 disp-low disp-high
     if (getOpcode8(binary) == 0xc2)
     {
@@ -985,8 +1017,6 @@ void Instruction::SetBinary(int pc)
         binary[i] = binary[pc+i];
     }
 }
-
-
 
 string GetRegStr(char reg, bool w)
 {
