@@ -40,22 +40,8 @@ class Instruction
 private:
     
     string str[3];
-    string data[2]; // disp-low, disp-high - data-low, data-high
     
-    /*-----------------------------------*/
-    
-    char *binary; // binary of one instruction only
-    char size;
     int pos; //position of instruction in file
-    
-    unsigned char opcode;
-    bool d;
-    bool w;
-    char sw;
-    
-    char mod;
-    char reg;
-    char rm;
     
     /*-----------------------------------*/
     
@@ -71,9 +57,26 @@ private:
     
 public:
     
+    char *binary; // binary of one instruction only
+    char size;
+    
+    unsigned char opcode;
+    bool d;
+    bool w;
+    char sw;
+    
+    char mod;
+    char reg;
+    char rm;
+    
+    char16_t data;
+    
+    /*-----------------------------------*/
+    
     Instruction(char *binary, int pc);
     
     int GetInstructionSize();
+    void Print();
 };
 
 #endif /* Instruction_hpp */

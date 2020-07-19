@@ -46,24 +46,46 @@ int Binary2Dec(const string& s, int start_pos, int bytes_count)
     return result;
 }
 
-string Byte2Hex(char s, bool upper_case, bool is_signed)
+string Byte2Hex(char s, bool upper_case, bool is_signed, bool set_fill)
 {
     stringstream result;
     
-    if (is_signed)
-        result << hex << (s<0?"-":"") << setfill('0') << setw(2) << (upper_case ? uppercase : nouppercase) <<  (s<0?-(unsigned)s:s);
+    if (set_fill)
+    {
+        if (is_signed)
+            result << hex << (s<0?"-":"") << setfill('0') << setw(2) << (upper_case ? uppercase : nouppercase) <<  (s<0?-(unsigned)s:s);
+        else
+            result << hex << setfill('0') << setw(2) << (upper_case ? uppercase : nouppercase) << int(s&0xff);
+    }
     else
-        result << hex << setfill('0') << setw(2) << (upper_case ? uppercase : nouppercase) << int(s&0xff);
-    
+    {
+        if (is_signed)
+            result << hex << (s<0?"-":"") << (upper_case ? uppercase : nouppercase) <<  (s<0?-(unsigned)s:s);
+        else
+            result << hex << (upper_case ? uppercase : nouppercase) << int(s&0xff);
+    }
 
     return result.str();
 }
 
-string TwoBytes2Hex(char16_t s, bool upper_case)
+string TwoBytes2Hex(short int s, bool upper_case, bool is_signed, bool set_fill)
 {
     stringstream result;
     
-    result << hex << (s<0?"-":"") << setfill('0') << setw(4) << (upper_case ? uppercase : nouppercase) <<  (s<0?-(unsigned)s:s);
+    if (set_fill)
+    {
+        if (is_signed)
+            result << hex << ((s<0||s>0xfff)?"-":"") << setfill('0') << setw(4) << (upper_case ? uppercase : nouppercase) << ((s<0||s>0xfff)?-s:s);
+        else
+            result << hex << setfill('0') << setw(4) << (upper_case ? uppercase : nouppercase) << int(s&0xffff);
+    }
+    else
+    {
+        if (is_signed)
+            result << hex << ((s<0||s>0xfff)?"-":"") << (upper_case ? uppercase : nouppercase) << ((s<0||s>0xfff)?-s:s);
+        else
+            result << hex << (upper_case ? uppercase : nouppercase) << int(s&0xffff);
+    }
     
     return result.str();
     

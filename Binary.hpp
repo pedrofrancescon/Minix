@@ -20,8 +20,8 @@ string Binary2Text(const string& s, int start_pos, long text_size);
 
 int Binary2Dec(const string& s, int start_pos, int bytes_count);
 
-string Byte2Hex(char s, bool upper_case = false, bool is_signed = true);
+string Byte2Hex(char s, bool upper_case = false, bool is_signed = true, bool set_fill = true);
 
-string TwoBytes2Hex(char16_t s, bool upper_case = false);
+string TwoBytes2Hex(short int s, bool upper_case = false, bool is_signed = true, bool set_fill = true);
 
 #endif /* Binary_hpp */

@@ -8,46 +8,45 @@
 
 #include "Binary.hpp"
 #include "Instruction.hpp"
+#include "VirtualMachine.hpp"
 
-#define MASK >> 5 & 0x3
+
+ifstream::pos_type OpenFile(const char * file_name[], char ** memblock)
+{
+    ifstream file (file_name[1], ios::in|ios::binary|ios::ate);
+    
+    if (!file.is_open())
+    {
+        cout << "Unable to open file";
+        return 0;
+    }
+    
+    ifstream::pos_type size;
+    
+    size = file.tellg();
+    *memblock = new char [size];
+    file.seekg (0, ios::beg);
+    file.read (*memblock, size);
+    file.close();
+    
+    return size;
+}
 
 int main(int argc, const char * argv[]) {
     
-    ifstream::pos_type size;
-    char * memblock;
-
-    ifstream file ("a.out", ios::in|ios::binary|ios::ate);
-    if (!file.is_open())
+    if (argc != 2)
     {
-        cout << "Could not open the file" << endl;
+        cout << "Incorrect argument!";
         return 0;
     }
 
-    size = file.tellg();
-    memblock = new char [size];
-    file.seekg (0, ios::beg);
-    file.read (memblock, size);
-    file.close();
+    char * memblock;
+    ifstream::pos_type size = OpenFile(argv,&memblock);
+
+    VirtualMachine vm (memblock, size);
+
+    vm.Disassemble(true);
     
-//    Instruction test (memblock, 0x27a + TEXT_START_POS);
-    
-    long text_size = Binary2Dec(string(memblock,size), 8, 4);
-    int pc = TEXT_START_POS;
-
-    while (pc < TEXT_START_POS + text_size)
-    {
-//        cout << hex << setfill('0') << setw(4) << pc - TEXT_START_POS << ":   ";
-
-        Instruction instruction (memblock, pc);
-        if (instruction.GetInstructionSize() == 0)
-        {
-            cout << hex << "STOPPED: " << pc - TEXT_START_POS <<  endl;
-            cout << endl;
-            break;
-        }
-        pc += instruction.GetInstructionSize();
-    }
-
     return 0;
     
 }
