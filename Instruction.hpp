@@ -9,29 +9,16 @@
 #ifndef Instruction_hpp
 #define Instruction_hpp
 
-#define TEXT_START_POS 32
+#define TEXT_START_POS 0x20
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
 
 #include "Binary.hpp"
+#include "Definitions.hpp"
 
-using namespace std;
-
-inline unsigned char getOpcode4(char* binary) { return binary[0] >> 4 & 0xf; }
-inline unsigned char getOpcode5(char* binary) { return binary[0] >> 3 & 0x1f; }
-inline unsigned char getOpcode6(char* binary) { return binary[0] >> 2 & 0x3f; }
-inline unsigned char getOpcode7(char* binary) { return binary[0] >> 1 & 0x7f; }
-inline unsigned char getOpcode8(char* binary) { return binary[0] & 0xff; }
-
-inline unsigned char getD(char* binary) { return binary[0] >> 1 & 0x1; }
-inline unsigned char getW(char* binary) { return binary[0] & 0x1; }
-inline unsigned char getSW(char* binary) { return binary[0] & 0x3; }
-
-inline unsigned char getMod(char* binary) { return binary[1] >> 6 & 0x3; }
-inline unsigned char getReg(char* binary) { return binary[1] >> 3 & 0x7; }
-inline unsigned char getRm(char* binary) { return binary[1] & 0x7; }
+#include <vector>
 
 string GetRegStr(char reg, bool w);
 
@@ -70,6 +57,7 @@ public:
     char rm;
     
     char16_t data;
+    tuple<vector<regs>, char16_t> ea; // Effective Address
     
     /*-----------------------------------*/
     

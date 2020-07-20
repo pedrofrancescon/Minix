@@ -16,7 +16,7 @@ using namespace std;
 
 string Binary2Bits(const string& s, int pos);
 
-string Binary2Text(const string& s, int start_pos, long text_size);
+string Binary2Text(char *s, int start_pos, long text_size);
 
 int Binary2Dec(const string& s, int start_pos, int bytes_count);
 

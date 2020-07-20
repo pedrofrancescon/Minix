@@ -10,9 +10,9 @@
 #define VirtualMachine_hpp
 
 #include "Instruction.hpp"
-#include <vector>
+#include "Definitions.hpp"
 
-enum regs {ax, cx, dx, bx, sp, bp, si, di};
+#include <vector>
 
 class VirtualMachine
 {
@@ -23,13 +23,11 @@ private:
     
     vector<Instruction> instructions;
     
-    char * file;
-    ifstream::pos_type file_size;
+    char * text;
+    char * data;
     
     int text_size;
     int data_size;
-    
-    int pc;
     
 public:
     

@@ -20,7 +20,7 @@ string Binary2Bits(const string& s, int pos)
     return b.to_string();
 }
 
-string Binary2Text(const string& s, int start_pos, long text_size)
+string Binary2Text(char *s, int start_pos, long text_size)
 {
     stringstream text;
 

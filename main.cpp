@@ -45,7 +45,8 @@ int main(int argc, const char * argv[]) {
 
     VirtualMachine vm (memblock, size);
 
-    vm.Disassemble(true);
+    vm.Disassemble(false);
+    vm.Interpret();
     
     return 0;
     

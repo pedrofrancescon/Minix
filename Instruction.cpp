@@ -67,6 +67,7 @@ void Instruction::SetOpcode(char* binary)
         }
         
         str[2] = Byte2Hex(binary[1]);
+        data = binary[1];
         size = 2;
         
     }
@@ -214,13 +215,15 @@ void Instruction::SetOpcode(char* binary)
         SetRm(binary);
         SetSW(binary);
         
-        if (getReg(binary) == 0x0)
+        reg = getReg(binary);
+        
+        if (reg == 0x0)
             str[0] = "add";
-        else if (getReg(binary) == 0x7)
+        else if (reg == 0x7)
             str[0] = "cmp";
-        else if (getReg(binary) == 0x5)
+        else if (reg == 0x5)
             str[0] = "sub";
-        else if (getReg(binary) == 0x3)
+        else if (reg == 0x3)
             str[0] = "sbb";
         else
             size = 0;
@@ -231,6 +234,7 @@ void Instruction::SetOpcode(char* binary)
             {
                 size++;
                 char16_t sum = (unsigned char)binary[size-2] + ((unsigned char)binary[size-1] << 8 );
+                data = sum;
                 str[2] = TwoBytes2Hex(sum, false, false, true);
                 return;
             }
@@ -241,9 +245,11 @@ void Instruction::SetOpcode(char* binary)
             }
             
             str[2] = Byte2Hex(binary[size-1], false, true, false);
+            data = binary[size-1];
             return;
         }
     }
+    
     // AND: 1000000w mod 100 r/m data data if w = 1
     // OR:  1000000w mod 001 r/m data data if w = 1
     if (getOpcode7(binary) == 0x40)
@@ -924,19 +930,20 @@ void Instruction::SetMod(char *binary)
     {
         char16_t sum = char16_t(binary[2]&0xff) + (char16_t(binary[3]&0xff) << 8);
         
-        
+        get<1>(ea) = sum;
         str[str_pos] = TwoBytes2Hex(sum, false, true, false);
         size += 2;
     }
     else if (mod == 0x1) // mod = 01
     {
         str[str_pos] = Byte2Hex(binary[2], false, true, false);
+        get<1>(ea) = binary[2];
         size += 1;
     }
     else if (mod == 0x2) // mod = 10
     {
         char16_t sum = char16_t(binary[2]&0xff) + (char16_t(binary[3]&0xff) << 8);
-        
+        get<1>(ea) = sum;
         str[str_pos] = TwoBytes2Hex(sum, false, true, false);
         size += 2;
     }
@@ -973,30 +980,44 @@ void Instruction::SetRm(char *binary)
     switch (rm) {
         case 0x0:
             aux = "[bx+si";
+            get<0>(ea).push_back(bx);
+            get<0>(ea).push_back(si);
             break;
         case 0x1:
             aux = "[bx+di";
+            get<0>(ea).push_back(bx);
+            get<0>(ea).push_back(di);
             break;
         case 0x2:
             aux = "[bp+si";
+            get<0>(ea).push_back(bp);
+            get<0>(ea).push_back(si);
             break;
         case 0x3:
             aux = "[bp+di";
+            get<0>(ea).push_back(bp);
+            get<0>(ea).push_back(di);
             break;
         case 0x4:
             aux = "[si";
+            get<0>(ea).push_back(si);
             break;
         case 0x5:
             aux = "[di";
+            get<0>(ea).push_back(di);
             break;
         case 0x6:
             if (getMod(binary) == 0x0)
                 aux = "[";
             else
+            {
                 aux = "[bp";
+                get<0>(ea).push_back(bp);
+            }
             break;
         case 0x7:
             aux = "[bx";
+            get<0>(ea).push_back(bx);
             break;
     }
     
