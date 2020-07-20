@@ -18,6 +18,11 @@ Instruction::Instruction(char* binary, int pc)
     SetBinary(pc);
 }
 
+Instruction::Instruction()
+{
+    size = 0;
+}
+
 void Instruction::Print()
 {
     cout << str[0];
@@ -95,8 +100,8 @@ void Instruction::SetOpcode(char* binary)
         str[0] += " byte";
         str[2] = Byte2Hex(binary[size-1]);
         return;
-        
     }
+    
     // PUSH: 11111111 mod 110 r/m
     // CALL: 11111111 mod 010 r/m
     // JMP:  11111111 mod 101 r/m
@@ -118,6 +123,7 @@ void Instruction::SetOpcode(char* binary)
             str[0] = "call";
         return;
     }
+    
     // 01010 reg
     if (getOpcode5(binary) == 0xA)
     {
@@ -128,6 +134,7 @@ void Instruction::SetOpcode(char* binary)
         size = 1;
         return;
     }
+    
     // 01011 reg
     if (getOpcode5(binary) == 0xB)
     {
@@ -526,6 +533,8 @@ void Instruction::SetOpcode(char* binary)
         char16_t disp_high = binary[2] << 8;
         char16_t result = current_pos + disp_low + disp_high;
         
+        data = result;
+        
         str[0] = "call";
         
         str[1] = TwoBytes2Hex(result, false, false, true);
@@ -596,6 +605,8 @@ void Instruction::SetOpcode(char* binary)
         unsigned char disp_low = binary[1];
         char16_t disp_high = binary[2] << 8;
         char16_t result = current_pos + disp_low + disp_high;
+        
+        data = result;
 
         str[0] = "jmp";
         
@@ -615,7 +626,6 @@ void Instruction::SetOpcode(char* binary)
         char16_t result = current_pos + disp;
         
         str[0] = "jmp short";
-//        str[0] = "jmp";
         
         str[1] = TwoBytes2Hex(result, false, false, true);
         

@@ -14,6 +14,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <map>
 
 #include "Binary.hpp"
 #include "Definitions.hpp"
@@ -62,6 +63,7 @@ public:
     /*-----------------------------------*/
     
     Instruction(char *binary, int pc);
+    Instruction();
     
     int GetInstructionSize();
     void Print();

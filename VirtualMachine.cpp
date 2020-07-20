@@ -17,6 +17,9 @@ VirtualMachine::VirtualMachine(char * file, ifstream::pos_type file_size)
     
     this->data_size = Binary2Dec(string(file,file_size), 0xC, 4);
     this->data = &(file[TEXT_START_POS+text_size]);
+    
+    registers[sp] = 0xffdc;
+    this->memory = new char16_t [registers[sp] + 2];
 }
 
 void VirtualMachine::Disassemble(bool print_result)
@@ -27,7 +30,7 @@ void VirtualMachine::Disassemble(bool print_result)
     {
         Instruction instruction (text, pc);
         
-        instructions.push_back(instruction);
+        instructions[pc] = instruction;
         
         if (print_result)
         {
@@ -39,27 +42,38 @@ void VirtualMachine::Disassemble(bool print_result)
     }
 }
 
-void VirtualMachine::Interpret()
+void VirtualMachine::Execute()
 {
-    for(std::vector<Instruction>::iterator it = instructions.begin(); it != instructions.end(); ++it) {
+    
+    char16_t i = 0x0;
+    
+    while(i < text_size)
+    {
         
         // MOV: 1011 w reg data data if w=1
-        if (it->opcode == 0xB)
+        if (instructions[i].opcode == 0xB)
         {
-            registers[it->reg] = it->data;
+            registers[instructions[i].reg] = instructions[i].data;
         }
         
         // MOV: 100010dw mod reg r/m
-        if (it->opcode == 0x22)
+        if (instructions[i].opcode == 0x22)
         {
-            if (it->d)
-                registers[it->reg] = registers[it->rm];
+            if (instructions[i].d)
+                registers[instructions[i].reg] = registers[instructions[i].rm];
             else
-                registers[it->rm] = registers[it->reg];
+                registers[instructions[i].rm] = registers[instructions[i].reg];
+        }
+        
+        // PUSH: 01010 reg
+        if (instructions[i].opcode == 0xA)
+        {
+            memory[registers[sp]] = registers[instructions[i].reg];
+            registers[sp] -= 2;
         }
         
         // INT: 11001101 type
-        if (it->opcode == 0xCD)
+        if (instructions[i].opcode == 0xCD)
         {
             char s_call_type = data[registers[bx]+2];
             
@@ -76,18 +90,45 @@ void VirtualMachine::Interpret()
             }
         }
         
-        // SUB: 100000sw mod 101 r/m data data
-        if (it->opcode == 0x20)
+        // ADD: 000000dw mod reg r/m
+        if (instructions[i].opcode == 0)
         {
             
-            if (it->reg == 0x5) // SUB
+        }
+        
+        // ADD: 100000sw mod 000 r/m data data if sw = 01
+        // SUB: 100000sw mod 101 r/m data data
+        if (instructions[i].opcode == 0x20)
+        {
+            if (instructions[i].reg == 0x0) // ADD
             {
-                data[get<1>(it->ea)] -= it->data;
+                data[get<1>(instructions[i].ea)] += instructions[i].data;
+            }
+            
+            if (instructions[i].reg == 0x5) // SUB
+            {
+                data[get<1>(instructions[i].ea)] -= instructions[i].data;
             }
         }
         
+        // JMP: 11101001 disp-low disp-high
+        if (instructions[i].opcode == 0xe9)
+        {
+            i = instructions[i].data;
+            continue;
+        }
+        
+        // CALL: 11101000 disp-low disp-high
+        if (instructions[i].opcode == 0xe8)
+        {
+            memory[registers[sp]] = i + instructions[i].size;
+            registers[sp] -= 2;
+            i = instructions[i].data;
+            continue;
+        }
+        
+        i += instructions[i].size;
         
     }
-    
     
 }

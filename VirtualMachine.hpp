@@ -21,10 +21,12 @@ private:
     
     char16_t registers[8];
     
-    vector<Instruction> instructions;
+    map<char16_t, Instruction> instructions;
     
     char * text;
     char * data;
+    
+    char16_t * memory;
     
     int text_size;
     int data_size;
@@ -34,7 +36,7 @@ public:
     VirtualMachine(char * file, ifstream::pos_type file_size);
     
     void Disassemble(bool print_result);
-    void Interpret();
+    void Execute();
     
 };
 
